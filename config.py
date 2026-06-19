@@ -4,36 +4,42 @@ SCREEN_WIDTH = 1500
 SCREEN_HEIGHT = 820
 FPS = 60
 
-BG_TOP = (8, 8, 40)
-BG_BOTTOM = (2, 2, 18)
-PANEL_BG = (16, 16, 48)
-PANEL_BORDER = (40, 40, 90)
-CARD_BG = (22, 22, 55)
-CARD_BORDER = (35, 35, 75)
-CARD_HOVER = (32, 32, 70)
-ACCENT = (80, 130, 255)
-WHITE = (240, 240, 255)
-MUTED = (130, 130, 170)
-GREEN = (0, 220, 80)
-RED = (220, 50, 50)
-ORANGE = (255, 180, 0)
-CYAN = (0, 200, 200)
-YELLOW = (255, 255, 80)
-GOLD = (255, 215, 0)
-RADAR_GREEN = (0, 255, 80)
-RADAR_DIM = (0, 40, 15)
+# Core palette
+BG_PRIMARY = (8, 8, 24)
+BG_SECONDARY = (14, 14, 34)
+BG_PANEL = (18, 18, 42)
+BG_CARD = (23, 23, 50)
+BG_CARD_HOVER = (32, 32, 62)
+BORDER = (40, 40, 72)
+BORDER_LIGHT = (55, 55, 90)
+TEXT_PRIMARY = (225, 225, 245)
+TEXT_SECONDARY = (150, 150, 185)
+TEXT_MUTED = (90, 90, 130)
+ACCENT = (55, 120, 255)
+ACCENT_HOVER = (80, 150, 255)
+ACCENT_TEAL = (0, 200, 200)
+ACCENT_PURPLE = (120, 70, 220)
+GREEN = (0, 200, 80)
+RED = (230, 60, 60)
+ORANGE = (255, 170, 50)
+YELLOW = (245, 220, 60)
+CYAN = (0, 185, 200)
+WHITE = TEXT_PRIMARY
 BLACK = (0, 0, 0)
+MUTED = TEXT_MUTED
 
 STATUS_COLORS = {
-    "Programado": (80, 100, 255),
-    "Abordando": ORANGE,
-    "Despegó": GREEN,
-    "En vuelo": CYAN,
-    "Aterrizó": (60, 255, 120),
-    "En puerta": (40, 200, 80),
-    "Retardado": RED,
-    "Cancelado": (120, 20, 20),
+    "Programado": (70, 110, 255),
+    "Abordando": (255, 170, 50),
+    "Despegó": (0, 200, 80),
+    "En vuelo": (0, 180, 200),
+    "Aterrizó": (50, 220, 110),
+    "En puerta": (70, 200, 70),
+    "Retardado": (230, 60, 60),
+    "Cancelado": (130, 30, 30),
 }
+
+STATUS_BG = {k: (v[0]//5, v[1]//5, v[2]//5, 180) for k, v in STATUS_COLORS.items()}
 
 STATUS_TRANSITIONS_DEP = ["Programado", "Abordando", "Despegó", "En vuelo"]
 STATUS_TRANSITIONS_ARR = ["En vuelo", "Aterrizó", "En puerta"]

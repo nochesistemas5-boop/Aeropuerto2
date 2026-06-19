@@ -1,7 +1,7 @@
 import random
 import math
 from typing import List, Dict, Optional, Tuple
-from flight import Flight
+from flight import Flight, assign_crew
 from config import *
 
 class AIEngine:
@@ -118,6 +118,12 @@ class AIEngine:
         return max(0, delay)
 
     def _process_flight(self, f: Flight, flights: List[Flight]):
+        if not f.captain:
+            cap, cop, cab1, cab2 = assign_crew(f.code)
+            f.captain = cap
+            f.copilot = cop
+            f.cabin_crew = f"{cab1}, {cab2}"
+
         progress_speed = 1.0
         weather_factor = WEATHER_DELAY[self.weather]
         if weather_factor > 0:

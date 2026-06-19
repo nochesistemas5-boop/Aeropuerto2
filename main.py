@@ -8,7 +8,8 @@ from config import *
 from flight import Flight, save_flights, load_flights
 from ai_engine import AIEngine
 from ui import (
-    draw_gradient, TopBar, SearchBar, FlightPanel, Radar,
+    draw_gradient, TopBar, SearchBar, FlightPanel, Radar, Runway,
+    ContextMenu, CommandLog,
     DetailPanel, NewFlightDialog, HelpOverlay, NotificationLog,
     Button, get_font
 )
@@ -93,11 +94,14 @@ def main():
 
     flights = make_flights()
     ai = AIEngine()
-    radar = Radar(1270, 400, 195)
+    radar = Radar(1270, 370, 170)
+    runway = Runway(1080, 660, 400, 115)
     detail = DetailPanel()
     new_flight_dialog = NewFlightDialog()
     help_overlay = HelpOverlay()
     notifications = NotificationLog()
+    command_log = CommandLog()
+    context_menu = ContextMenu()
 
     top_bar = TopBar()
     search_bar = SearchBar()
@@ -127,6 +131,7 @@ def main():
 
         # -- update --
         radar.update()
+        runway.update()
 
         # -- draw --
         draw_gradient(screen)
@@ -153,23 +158,30 @@ def main():
         # radar
         radar.draw(screen)
 
+        # runway
+        runway.draw(screen)
+
         # bottom bar
         pygame.draw.rect(screen, (10, 10, 40), (0, 785, SCREEN_WIDTH, 35))
-        pygame.draw.line(screen, PANEL_BORDER, (0, 785), (SCREEN_WIDTH, 785), 2)
+        pygame.draw.line(screen, BORDER, (0, 785), (SCREEN_WIDTH, 785), 1)
         btn_new.draw(screen)
         btn_save.draw(screen)
         btn_load.draw(screen)
         btn_reset.draw(screen)
 
-        help_lbl = get_font(13).render("F1: Ayuda  |  Click vuelo: Detalle + Acciones", True, MUTED)
+        help_lbl = get_font(11).render("F1: Ayuda  |  Click: Detalle  |  Click der: Torre  |  Rueda: Scroll", True, TEXT_MUTED)
         screen.blit(help_lbl, (620, 792))
 
         # notification log
         notifications.draw(screen, 735, 130)
 
+        # command log
+        command_log.draw(screen, 735, 560)
+
         # dialogs on top
         detail.draw(screen, ai.get_delay_reason(detail.flight) if detail.flight else "")
         new_flight_dialog.draw(screen)
+        context_menu.draw(screen)
         help_overlay.draw(screen)
 
         pygame.display.flip()
@@ -199,7 +211,9 @@ def main():
                 if new_flight_dialog.active:
                     new_flight_dialog.handle_event(event)
                 elif event.key == pygame.K_ESCAPE:
-                    if help_overlay.active:
+                    if context_menu.active:
+                        context_menu.hide()
+                    elif help_overlay.active:
                         help_overlay.close()
                     else:
                         detail.hide()
@@ -229,11 +243,15 @@ def main():
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 pos = event.pos
 
+                search_bar.handle_event(event)
+
                 # bottom bar buttons
                 if btn_new.rect.collidepoint(pos):
                     new_flight_dialog.open()
+                    continue
                 elif btn_save.rect.collidepoint(pos):
                     save_flights(flights, "vuelos.json")
+                    continue
                 elif btn_load.rect.collidepoint(pos):
                     try:
                         loaded = load_flights("vuelos.json")
@@ -241,17 +259,24 @@ def main():
                             flights = loaded
                     except Exception:
                         pass
+                    continue
                 elif btn_reset.rect.collidepoint(pos):
                     flights = make_flights()
                     ai = AIEngine()
+                    continue
 
                 # filter buttons
                 filters_region = [("all", pygame.Rect(380, 90, 72, 34)),
                                   ("dep", pygame.Rect(458, 90, 72, 34)),
                                   ("arr", pygame.Rect(536, 90, 72, 34))]
+                clicked_filter = False
                 for key, rect in filters_region:
                     if rect.collidepoint(pos):
                         search_bar.active_filter = key
+                        clicked_filter = True
+                        break
+                if clicked_filter:
+                    continue
 
                 # detail panel click
                 if detail.flight:
@@ -282,6 +307,54 @@ def main():
                         continue
                     detail.hide()
 
+                # context menu click (right click handled first)
+                if context_menu.active:
+                    result = context_menu.handle_click(pos)
+                    if result:
+                        action, f = result
+                        if action == "detail":
+                            detail.show(f)
+                        elif action == "abordar" and f.status == "Programado":
+                            f.status = "Abordando"
+                            command_log.add(f"{f.code}: Abordaje iniciado")
+                        elif action == "despegar":
+                            f.status = "Despegó"
+                            f.progress = 55
+                            command_log.add(f"{f.code}: Despegue autorizado")
+                        elif action == "aterrizar":
+                            f.status = "Aterrizó"
+                            f.progress = 82
+                            command_log.add(f"{f.code}: Aterrizaje autorizado")
+                        elif action == "repuerta":
+                            import random
+                            from config import GATES_DEP, GATES_ARR
+                            pool = GATES_DEP if f.direction == "Salida" else GATES_ARR
+                            f.gate = random.choice(pool)
+                            command_log.add(f"{f.code}: Puerta asignada {f.gate}")
+                        elif action == "delay10":
+                            f.delay += 10
+                            command_log.add(f"{f.code}: +10 min demora")
+                        elif action == "cleardelay":
+                            f.delay = 0
+                            command_log.add(f"{f.code}: Demora eliminada")
+                        elif action == "reanudar":
+                            from config import STATUS_TRANSITIONS_DEP, STATUS_TRANSITIONS_ARR
+                            if f.direction == "Salida":
+                                for s in STATUS_TRANSITIONS_DEP:
+                                    if f.progress < 60:
+                                        f.status = s
+                                        break
+                            else:
+                                for s in STATUS_TRANSITIONS_ARR:
+                                    if f.progress < 92:
+                                        f.status = s
+                                        break
+                            command_log.add(f"{f.code}: Vuelo reanudado")
+                        elif action == "cancelar":
+                            f.status = "Cancelado"
+                            command_log.add(f"{f.code}: Vuelo CANCELADO")
+                        notifications.add(f"Torre: {command_log.items[-1] if command_log.items else action}", CYAN)
+
                 # new flight dialog click
                 if new_flight_dialog.active:
                     result = new_flight_dialog.handle_event(event)
@@ -290,16 +363,27 @@ def main():
                         notifications.add(f"Nuevo vuelo: {result.code} → {result.destination}", GREEN)
                     continue
 
+                # right click - context menu
+                if event.button == 3:
+                    for p in panels:
+                        f = p.handle_mouse(event)
+                        if f:
+                            context_menu.show(f, event.pos[0], event.pos[1])
+                            break
+
                 # search bar click
                 search_bar.handle_event(event)
 
-                # check flight cards
-                for p in panels:
-                    f = p.handle_mouse(event)
-                    if f:
-                        detail.show(f)
+                # check flight cards (left click)
+                if event.button == 1:
+                    for p in panels:
+                        f = p.handle_mouse(event)
+                        if f:
+                            if not context_menu.active:
+                                detail.show(f)
 
             elif event.type == pygame.MOUSEMOTION:
+                context_menu.handle_motion(event.pos)
                 # hover for buttons
                 for btn in [btn_new, btn_save, btn_load, btn_reset]:
                     btn.handle_event(event)
