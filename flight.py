@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 import json
 import random
+from config import AIRPORT_CODES
 
 CAPTAINS = ["Cap. Gómez", "Cap. Ramírez", "Cap. Torres", "Cap. Mendoza",
             "Cap. Rojas", "Cap. Silva", "Cap. Vargas", "Cap. Castro"]
@@ -42,10 +43,15 @@ class Flight:
     captain: str = ""
     copilot: str = ""
     cabin_crew: str = ""
+    origin_airport: str = "BOG"
+    destination_airport: str = ""
+    passenger_stage: str = ""
 
     def __post_init__(self):
         if not self.prev_status:
             self.prev_status = self.status
+        if not self.destination_airport:
+            self.destination_airport = AIRPORT_CODES.get(self.destination, "")
 
     @property
     def has_changed(self) -> bool:
@@ -86,6 +92,8 @@ def flight_to_dict(f: Flight) -> dict:
         "scheduled_time": f.scheduled_time, "delay": f.delay,
         "gate": f.gate, "progress": f.progress,
         "captain": f.captain, "copilot": f.copilot, "cabin_crew": f.cabin_crew,
+        "origin_airport": f.origin_airport, "destination_airport": f.destination_airport,
+        "passenger_stage": f.passenger_stage,
     }
 
 
@@ -99,6 +107,9 @@ def flight_from_dict(d: dict) -> Flight:
         captain=d.get("captain", ""),
         copilot=d.get("copilot", ""),
         cabin_crew=d.get("cabin_crew", ""),
+        origin_airport=d.get("origin_airport", "BOG"),
+        destination_airport=d.get("destination_airport", ""),
+        passenger_stage=d.get("passenger_stage", ""),
     )
 
 

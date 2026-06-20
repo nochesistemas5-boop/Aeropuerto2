@@ -56,3 +56,43 @@ WEATHER_DELAY = {"Despejado": 0, "Nublado": 2, "Lluvioso": 5, "Tormenta": 12}
 UPDATE_MS = 3000
 PROGRESS_PER_TICK = 4
 MAX_PROGRESS = 100
+
+SPEEDS = [1, 2, 5, 10]
+SORT_KEYS = ["code", "time", "status"]
+
+AIRPORTS = {
+    "BOG": ("Bogotá", (90, 100, 220)),
+    "MDE": ("Medellín", (200, 150, 80)),
+    "CLO": ("Cali", (160, 200, 120)),
+    "CTG": ("Cartagena", (220, 180, 60)),
+    "BAQ": ("Barranquilla", (140, 90, 180)),
+    "MAD": ("Madrid", (100, 100, 100)),
+    "MIA": ("Miami", (200, 80, 80)),
+    "PTY": ("Panamá", (180, 180, 80)),
+    "UIO": ("Quito", (80, 180, 130)),
+    "LIM": ("Lima", (130, 80, 180)),
+    "CDG": ("París", (180, 130, 200)),
+    "JFK": ("Nueva York", (60, 60, 180)),
+    "FRA": ("Frankfurt", (60, 100, 60)),
+    "LHR": ("Londres", (130, 130, 180)),
+    "ATL": ("Atlanta", (180, 180, 60)),
+    "YYZ": ("Toronto", (200, 60, 60)),
+    "AMS": ("Ámsterdam", (180, 60, 130)),
+    "IST": ("Estambul", (200, 130, 60)),
+    "DOH": ("Doha", (130, 180, 60)),
+    "DXB": ("Dubái", (180, 130, 60)),
+    "FCO": ("Roma", (130, 60, 180)),
+    "LIS": ("Lisboa", (60, 180, 130)),
+    "SCL": ("Santiago", (60, 130, 180)),
+    "EZE": ("Buenos Aires", (130, 180, 180)),
+    "MEX": ("Ciudad de México", (180, 180, 130)),
+    "HAV": ("La Habana", (60, 180, 60)),
+    "PUJ": ("Punta Cana", (180, 60, 180)),
+    "SFO": ("San Francisco", (60, 130, 60)),
+    "LAX": ("Los Ángeles", (130, 60, 60)),
+    "ORD": ("Chicago", (60, 60, 130)),
+}
+
+AIRPORT_CODES = {}
+for k, v in AIRPORTS.items():
+    AIRPORT_CODES[v[0]] = k

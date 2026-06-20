@@ -16,6 +16,9 @@ class AIEngine:
         self.stats = {
             "total": 0, "on_time": 0, "delayed": 0,
             "cancelled": 0, "avg_delay": 0.0,
+            "weather": self.weather,
+            "time": f"{self.sim_hour:02d}:{self.sim_min:02d}",
+            "gates_used": 0, "gates_total": 0,
         }
         self.flight_history: List[dict] = []
 
@@ -69,6 +72,8 @@ class AIEngine:
         cancelled = sum(1 for f in flights if f.status == "Cancelado")
         delays = [f.delay for f in flights if f.delay > 0]
         avg_delay = sum(delays) / len(delays) if delays else 0.0
+        gates_used = sum(1 for v in self.gates_dep.values() if v) + sum(1 for v in self.gates_arr.values() if v)
+        gates_total = len(self.gates_dep) + len(self.gates_arr)
         self.stats = {
             "total": total,
             "on_time": total - delayed - cancelled,
@@ -77,6 +82,8 @@ class AIEngine:
             "avg_delay": round(avg_delay, 1),
             "weather": self.weather,
             "time": f"{self.sim_hour:02d}:{self.sim_min:02d}",
+            "gates_used": gates_used,
+            "gates_total": gates_total,
         }
 
     def _get_congestion(self, flights: List[Flight]) -> float:
@@ -160,6 +167,32 @@ class AIEngine:
 
         if not f.gate:
             f.gate = self._assign_gate(f)
+
+        # Passenger stages
+        if f.direction == "Salida":
+            if f.status == "Programado":
+                f.passenger_stage = "check-in"
+                if f.progress > 5:
+                    f.passenger_stage = "seguridad"
+                if f.progress > 12:
+                    f.passenger_stage = "sala"
+                if f.progress > 20:
+                    f.passenger_stage = "abordaje"
+                if f.progress > 45:
+                    f.passenger_stage = "a bordo"
+            elif f.status == "Abordando":
+                f.passenger_stage = "abordaje"
+                if f.progress > 50:
+                    f.passenger_stage = "a bordo"
+            elif f.status in ("Despegó", "En vuelo"):
+                f.passenger_stage = "a bordo"
+        else:
+            if f.status == "En vuelo":
+                f.passenger_stage = "en vuelo"
+            elif f.status == "Aterrizó":
+                f.passenger_stage = "desembarque"
+            elif f.status == "En puerta":
+                f.passenger_stage = "llegada"
 
     def _restore_base_status(self, f: Flight):
         if f.direction == "Salida":
